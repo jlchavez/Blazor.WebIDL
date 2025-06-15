@@ -1,22 +1,23 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace KristofferStrube.Blazor.WebIDL;
-
-/// <summary>
-/// An attribute for making any <see cref="IJSWrapper"/> JSON serializable.
-/// </summary>
-public class IJSWrapperConverterAttribute : JsonConverterAttribute
+namespace KristofferStrube.Blazor.WebIDL
 {
     /// <summary>
-    /// Creates the <see cref="IJSWrapperConverter{TWrapper}"/> for serializing a specific <see cref="IJSWrapper"/>.
+    /// An attribute for making any <see cref="IJSWrapper"/> JSON serializable.
     /// </summary>
-    /// <param name="typeToConvert">The type to create a <see cref="IJSWrapperConverter{TWrapper}"/> for.</param>
-    public override JsonConverter? CreateConverter(Type typeToConvert)
+    public class IJSWrapperConverterAttribute : JsonConverterAttribute
     {
-        if (typeToConvert.IsAssignableTo(typeof(IJSWrapper)))
+        /// <summary>
+        /// Creates the <see cref="IJSWrapperConverter{TWrapper}"/> for serializing a specific <see cref="IJSWrapper"/>.
+        /// </summary>
+        /// <param name="typeToConvert">The type to create a <see cref="IJSWrapperConverter{TWrapper}"/> for.</param>
+        public override JsonConverter? CreateConverter(Type typeToConvert)
         {
-            return (JsonConverter)typeof(IJSWrapperConverter<>).MakeGenericType(typeToConvert).GetConstructor(Array.Empty<Type>())!.Invoke(null);
+            if (typeToConvert.IsAssignableTo(typeof(IJSWrapper)))
+            {
+                return (JsonConverter)typeof(IJSWrapperConverter<>).MakeGenericType(typeToConvert).GetConstructor(Array.Empty<Type>())!.Invoke(null);
+            }
+            return null;
         }
-        return null;
     }
 }

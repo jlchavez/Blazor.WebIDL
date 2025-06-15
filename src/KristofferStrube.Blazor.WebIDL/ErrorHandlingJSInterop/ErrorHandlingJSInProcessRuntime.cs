@@ -2,99 +2,100 @@
 using Microsoft.JSInterop.Infrastructure;
 using System.Diagnostics.CodeAnalysis;
 
-namespace KristofferStrube.Blazor.WebIDL;
-
-/// <inheritdoc cref="IErrorHandlingJSInProcessRuntime"/>
-public class ErrorHandlingJSInProcessRuntime : ErrorHandlingJSInterop, IErrorHandlingJSInProcessRuntime
+namespace KristofferStrube.Blazor.WebIDL
 {
-    /// <inheritdoc/>
-    public void InvokeVoid(string identifier, params object?[]? args)
+    /// <inheritdoc cref="IErrorHandlingJSInProcessRuntime"/>
+    public class ErrorHandlingJSInProcessRuntime : ErrorHandlingJSInterop, IErrorHandlingJSInProcessRuntime
     {
-        Invoke<object>(identifier, args);
-    }
-
-    /// <inheritdoc/>
-    public TResult Invoke<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] TResult>(string identifier, params object?[]? args)
-    {
-        if (Helper is null)
+        /// <inheritdoc/>
+        public void InvokeVoid(string identifier, params object?[]? args)
         {
-            throw new MissingErrorHandlingJSInteropSetupException();
+            Invoke<object>(identifier, args);
         }
 
-        if (Helper is not IJSInProcessObjectReference inProcessHelper)
+        /// <inheritdoc/>
+        public TResult Invoke<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] TResult>(string identifier, params object?[]? args)
         {
-            throw new InvalidOperationException("Tried to make syncronous invocation in an environment that does not allow In-Process JS invocations.");
-        }
-
-        try
-        {
-            if (typeof(TResult).IsAssignableTo(typeof(IJSObjectReference)))
+            if (Helper is null)
             {
-                IJSObjectReference result = inProcessHelper.Invoke<IJSObjectReference>(CallGlobalMethod, ExtraErrorProperties, identifier, args);
-                return (TResult)ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                throw new MissingErrorHandlingJSInteropSetupException();
             }
-            else
+
+            if (Helper is not IJSInProcessObjectReference inProcessHelper)
             {
-                TResult? result = inProcessHelper.Invoke<TResult>(CallGlobalMethod, ExtraErrorProperties, identifier, args);
-                return ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                throw new InvalidOperationException("Tried to make syncronous invocation in an environment that does not allow In-Process JS invocations.");
             }
-        }
-        catch (JSException exception)
-        {
-            if (UnpackMessageOfExeption(exception) is not JSError { } error)
+
+            try
             {
-                throw;
+                if (typeof(TResult).IsAssignableTo(typeof(IJSObjectReference)))
+                {
+                    IJSObjectReference result = inProcessHelper.Invoke<IJSObjectReference>(CallGlobalMethod, ExtraErrorProperties, identifier, args);
+                    return (TResult)ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                }
+                else
+                {
+                    TResult? result = inProcessHelper.Invoke<TResult>(CallGlobalMethod, ExtraErrorProperties, identifier, args);
+                    return ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                }
             }
-            throw MapToWebIDLException(error, exception);
-        }
-    }
-
-    /// <inheritdoc />
-    public async ValueTask InvokeVoidAsync(string identifier, params object?[]? args)
-    {
-        await InvokeVoidAsync(identifier, CancellationToken.None, args);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask InvokeVoidAsync(string identifier, CancellationToken cancellationToken, params object?[]? args)
-    {
-        await InvokeAsync<IJSVoidResult>(identifier, cancellationToken, args);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask<TValue> InvokeAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] TValue>(string identifier, params object?[]? args)
-    {
-        return await InvokeAsync<TValue>(identifier, CancellationToken.None, args);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask<TValue> InvokeAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] TValue>(string identifier, CancellationToken cancellationToken, params object?[]? args)
-    {
-        if (Helper is null)
-        {
-            throw new MissingErrorHandlingJSInteropSetupException();
-        }
-
-        try
-        {
-            if (typeof(TValue).IsAssignableTo(typeof(IJSObjectReference)))
+            catch (JSException exception)
             {
-                IJSObjectReference result = await Helper.InvokeAsync<IJSObjectReference>(CallAsyncGlobalMethod, cancellationToken, ExtraErrorProperties, identifier, args);
-                return (TValue)ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
-            }
-            else
-            {
-                TValue? result = await Helper.InvokeAsync<TValue>(CallAsyncGlobalMethod, cancellationToken, ExtraErrorProperties, identifier, args);
-                return ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                if (UnpackMessageOfExeption(exception) is not JSError { } error)
+                {
+                    throw;
+                }
+                throw MapToWebIDLException(error, exception);
             }
         }
-        catch (JSException exception)
+
+        /// <inheritdoc />
+        public async ValueTask InvokeVoidAsync(string identifier, params object?[]? args)
         {
-            if (UnpackMessageOfExeption(exception) is not JSError { } error)
+            await InvokeVoidAsync(identifier, CancellationToken.None, args);
+        }
+
+        /// <inheritdoc />
+        public async ValueTask InvokeVoidAsync(string identifier, CancellationToken cancellationToken, params object?[]? args)
+        {
+            await InvokeAsync<IJSVoidResult>(identifier, cancellationToken, args);
+        }
+
+        /// <inheritdoc />
+        public async ValueTask<TValue> InvokeAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] TValue>(string identifier, params object?[]? args)
+        {
+            return await InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+        }
+
+        /// <inheritdoc />
+        public async ValueTask<TValue> InvokeAsync<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicFields | DynamicallyAccessedMemberTypes.PublicProperties)] TValue>(string identifier, CancellationToken cancellationToken, params object?[]? args)
+        {
+            if (Helper is null)
             {
-                throw;
+                throw new MissingErrorHandlingJSInteropSetupException();
             }
-            throw MapToWebIDLException(error, exception);
+
+            try
+            {
+                if (typeof(TValue).IsAssignableTo(typeof(IJSObjectReference)))
+                {
+                    IJSObjectReference result = await Helper.InvokeAsync<IJSObjectReference>(CallAsyncGlobalMethod, cancellationToken, ExtraErrorProperties, identifier, args);
+                    return (TValue)ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                }
+                else
+                {
+                    TValue? result = await Helper.InvokeAsync<TValue>(CallAsyncGlobalMethod, cancellationToken, ExtraErrorProperties, identifier, args);
+                    return ConstructErrorHandlingInstanceIfJSInProcessObjectReference(result);
+                }
+            }
+            catch (JSException exception)
+            {
+                if (UnpackMessageOfExeption(exception) is not JSError { } error)
+                {
+                    throw;
+                }
+                throw MapToWebIDLException(error, exception);
+            }
         }
     }
 }
